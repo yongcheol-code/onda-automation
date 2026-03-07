@@ -1,4 +1,10 @@
-const COGNITO_REGION = 'ap-northeast-2';
+const {
+  CognitoUserPool,
+  CognitoUser,
+  AuthenticationDetails,
+} = require('amazon-cognito-identity-js');
+
+const COGNITO_USER_POOL_ID = 'ap-northeast-2_xEnTN6EgW';
 const COGNITO_CLIENT_ID = '7rn5f7nuqsgm75p7d7m27j2s02';
 
 let cachedToken = null;
@@ -9,39 +15,52 @@ function decodeJwtExpiry(token) {
     const payload = token.split('.')[1];
     const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
     return decoded.exp * 1000;
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
 
-async function getToken() {
+function getToken() {
   if (cachedToken && Date.now() < tokenExpiry - 5 * 60 * 1000) {
     console.log('[Auth] 캐시된 토큰 재사용');
-    return cachedToken;
+    return Promise.resolve(cachedToken);
   }
-  console.log('[Auth] Cognito 로그인 시작...');
-  const fetch = require('node-fetch');
-  const res = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-amz-json-1.1',
-      'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
-    },
-    body: JSON.stringify({
-      AuthFlow: 'USER_PASSWORD_AUTH',
+
+  console.log('[Auth] Cognito SRP 로그인 시작...');
+
+  return new Promise((resolve, reject) => {
+    const userPool = new CognitoUserPool({
+      UserPoolId: COGNITO_USER_POOL_ID,
       ClientId: COGNITO_CLIENT_ID,
-      AuthParameters: {
-        USERNAME: process.env.ONDA_EMAIL,
-        PASSWORD: process.env.ONDA_PASSWORD,
+    });
+
+    const authDetails = new AuthenticationDetails({
+      Username: process.env.ONDA_EMAIL,
+      Password: process.env.ONDA_PASSWORD,
+    });
+
+    const cognitoUser = new CognitoUser({
+      Username: process.env.ONDA_EMAIL,
+      Pool: userPool,
+    });
+
+    cognitoUser.authenticateUser(authDetails, {
+      onSuccess(session) {
+        const idToken = session.getIdToken().getJwtToken();
+        cachedToken = idToken;
+        tokenExpiry = decodeJwtExpiry(idToken);
+        console.log('[Auth] 로그인 성공! 만료:', new Date(tokenExpiry).toISOString());
+        resolve(idToken);
       },
-    }),
+      onFailure(err) {
+        console.error('[Auth] 로그인 실패:', err);
+        reject(new Error('Cognito 로그인 실패: ' + (err.message || err)));
+      },
+      newPasswordRequired() {
+        reject(new Error('비밀번호 변경 필요'));
+      },
+    });
   });
-  if (!res.ok) throw new Error(`Cognito 실패: ${res.status} ${await res.text()}`);
-  const data = await res.json();
-  const idToken = data?.AuthenticationResult?.IdToken;
-  if (!idToken) throw new Error('IdToken 없음');
-  cachedToken = idToken;
-  tokenExpiry = decodeJwtExpiry(idToken);
-  console.log('[Auth] 로그인 성공!');
-  return idToken;
 }
 
 module.exports = { getToken };
