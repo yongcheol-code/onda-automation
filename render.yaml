@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: onda-automation
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: ONDA_EMAIL
+        sync: false
+      - key: ONDA_PASSWORD
+        sync: false
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+      - key: WEBHOOK_SECRET
+        sync: false
