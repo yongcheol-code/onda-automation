@@ -1,86 +1,47 @@
-const puppeteer = require('puppeteer');
+const COGNITO_REGION = 'ap-northeast-2';
+const COGNITO_CLIENT_ID = '7rn5f7nuqsgm75p7d7m27j2s02';
 
 let cachedToken = null;
 let tokenExpiry = 0;
 
-/**
- * JWT payload 디코딩 (서명 검증 없이)
- */
 function decodeJwtExpiry(token) {
   try {
     const payload = token.split('.')[1];
     const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
-    return decoded.exp * 1000; // ms
-  } catch {
-    return 0;
-  }
+    return decoded.exp * 1000;
+  } catch { return 0; }
 }
 
-/**
- * 온다 어드민에 로그인해서 JWT 토큰 획득
- */
 async function getToken() {
-  // 캐시된 토큰이 유효하면 재사용 (만료 5분 전까지)
   if (cachedToken && Date.now() < tokenExpiry - 5 * 60 * 1000) {
-    console.log('[Auth] 캐시된 토큰 재사용 (만료:', new Date(tokenExpiry).toISOString(), ')');
+    console.log('[Auth] 캐시된 토큰 재사용');
     return cachedToken;
   }
-
-  console.log('[Auth] 새 토큰 획득 시작...');
-  const browser = await puppeteer.launch({
-    headless: 'new',
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-    ],
+  console.log('[Auth] Cognito 로그인 시작...');
+  const fetch = require('node-fetch');
+  const res = await fetch(`https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-amz-json-1.1',
+      'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+    },
+    body: JSON.stringify({
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: COGNITO_CLIENT_ID,
+      AuthParameters: {
+        USERNAME: process.env.ONDA_EMAIL,
+        PASSWORD: process.env.ONDA_PASSWORD,
+      },
+    }),
   });
-
-  try {
-    const page = await browser.newPage();
-
-    // XHR 인터셉트로 토큰 캡처
-    let capturedToken = null;
-    await page.setRequestInterception(true);
-    page.on('request', req => {
-      const headers = req.headers();
-      if (req.url().includes('tport.io') && headers['authorization']) {
-        capturedToken = headers['authorization'];
-        console.log('[Auth] 토큰 캡처 성공');
-      }
-      req.continue();
-    });
-
-    // 로그인 페이지로 이동
-    await page.goto('https://pension.onda.me/login', { waitUntil: 'networkidle2' });
-    await page.waitForSelector('input[type="email"], input[name="email"]', { timeout: 10000 });
-
-    // 이메일/비밀번호 입력
-    await page.type('input[type="email"], input[name="email"]', process.env.ONDA_EMAIL);
-    await page.type('input[type="password"]', process.env.ONDA_PASSWORD);
-    await page.click('button[type="submit"]');
-
-    // 로그인 후 대시보드 대기
-    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
-
-    // vacancies 페이지로 이동해서 API 호출 유발 (토큰 캡처용)
-    if (!capturedToken) {
-      await page.goto('https://pension.onda.me/vacancies', { waitUntil: 'networkidle2' });
-      await new Promise(r => setTimeout(r, 3000));
-    }
-
-    if (!capturedToken) {
-      throw new Error('토큰 캡처 실패 - 로그인 실패 또는 API 호출 없음');
-    }
-
-    cachedToken = capturedToken;
-    tokenExpiry = decodeJwtExpiry(capturedToken);
-    console.log('[Auth] 토큰 획득 완료, 만료:', new Date(tokenExpiry).toISOString());
-    return capturedToken;
-
-  } finally {
-    await browser.close();
-  }
+  if (!res.ok) throw new Error(`Cognito 실패: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  const idToken = data?.AuthenticationResult?.IdToken;
+  if (!idToken) throw new Error('IdToken 없음');
+  cachedToken = idToken;
+  tokenExpiry = decodeJwtExpiry(idToken);
+  console.log('[Auth] 로그인 성공!');
+  return idToken;
 }
 
 module.exports = { getToken };
