@@ -1,15 +1,18 @@
 {
   "name": "onda-automation",
   "version": "1.0.0",
-  "description": "온다 어드민 방막기/방열기 자동화 서버",
+  "description": "AroundFollie ONDA automation server",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "express": "^4.18.2",
-    "node-fetch": "^2.7.0",
-    "dotenv": "^16.3.1",
-    "amazon-cognito-identity-js": "^6.3.6"
+    "node-fetch": "^2.6.9",
+    "axios": "^1.6.0",
     "googleapis": "^140.0.0"
   },
-  "engines": { "node": ">=18.0.0" }
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
