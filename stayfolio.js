@@ -3,7 +3,6 @@ const https = require('https');
 const STAYFOLIO_HOST = 'host.stayfolio.com';
 const PLACE_SLUG = 'aroundfollie-lodge';
 
-// 실제 room_id (스테이폴리오 파트너센터에서 확인)
 const ROOM_ID_MAP = {
   'Lodge Loft A':      96,
   'Lodge Loft B':      97,
@@ -21,7 +20,6 @@ const ROOM_ID_MAP = {
 };
 
 async function login(email, password) {
-  // 신규 로그인 API: POST /api/v1/session/login (JSON)
   const body = JSON.stringify({
     user: { email, password, remember_me: '0' }
   });
@@ -31,18 +29,23 @@ async function login(email, password) {
     'Accept': 'application/json',
   });
 
-  console.log('[Stayfolio] 로그인 응답 status:', res.statusCode);
+  console.log('[Stayfolio] 로그인 status:', res.statusCode);
+  console.log('[Stayfolio] set-cookie 헤더:', JSON.stringify(res.headers['set-cookie']));
+  console.log('[Stayfolio] 응답 body:', res.body.substring(0, 200));
 
   if (res.statusCode !== 201 && res.statusCode !== 200) {
     throw new Error(`스테이폴리오 로그인 실패: HTTP ${res.statusCode} - ${res.body.substring(0, 100)}`);
   }
 
   const cookies = parseCookies(res.headers);
-  if (!cookies['_stayfolio_session']) {
-    throw new Error('스테이폴리오 로그인 실패 (세션 쿠키 없음)');
+  const cookieNames = Object.keys(cookies);
+  console.log('[Stayfolio] 파싱된 쿠키 이름:', cookieNames.join(', ') || '없음');
+
+  if (cookieNames.length === 0) {
+    throw new Error('스테이폴리오 로그인 실패 (쿠키 없음)');
   }
 
-  console.log('[Stayfolio] 로그인 성공, 쿠키:', Object.keys(cookies).join(', '));
+  console.log('[Stayfolio] 로그인 성공');
   return cookies;
 }
 
@@ -92,7 +95,7 @@ async function createBooking(cookies, {
   );
 
   console.log('[Stayfolio] 예약 POST status:', res.statusCode);
-  console.log('[Stayfolio] 응답 body:', res.body.substring(0, 200));
+  console.log('[Stayfolio] 응답 body:', res.body.substring(0, 300));
 
   if (res.statusCode >= 400) {
     throw new Error(`예약 생성 실패: HTTP ${res.statusCode} - ${res.body.substring(0, 100)}`);
