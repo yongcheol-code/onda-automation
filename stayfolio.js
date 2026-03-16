@@ -21,55 +21,29 @@ const ROOM_ID_MAP = {
 };
 
 async function login(email, password) {
-  const loginPage = await request('GET', STAYFOLIO_HOST, '/users/sign_in', null, {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+  // 신규 로그인 API: POST /api/v1/session/login (JSON)
+  const body = JSON.stringify({
+    user: { email, password, remember_me: '0' }
   });
 
-  const csrfToken = extractCsrf(loginPage.body);
-  if (!csrfToken) throw new Error('로그인 페이지 CSRF 토큰 획득 실패');
-
-  const cookies = parseCookies(loginPage.headers);
-  console.log('[Stayfolio] 초기 쿠키:', Object.keys(cookies).join(', '));
-
-  const formData = new URLSearchParams({
-    'authenticity_token': csrfToken,
-    'user[email]': email,
-    'user[password]': password,
-    'user[remember_me]': '0',
-    'commit': '로그인',
-  }).toString();
-
-  const loginRes = await request('POST', STAYFOLIO_HOST, '/users/sign_in', formData, {
-    'Cookie': cookiesToString(cookies),
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-    'Referer': `https://${STAYFOLIO_HOST}/users/sign_in`,
-    'Origin': `https://${STAYFOLIO_HOST}`,
+  const res = await request('POST', STAYFOLIO_HOST, '/api/v1/session/login', body, {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   });
 
-  const sessionCookies = parseCookies(loginRes.headers, cookies);
-  console.log('[Stayfolio] 로그인 응답 status:', loginRes.statusCode, '쿠키:', Object.keys(sessionCookies).join(', '));
+  console.log('[Stayfolio] 로그인 응답 status:', res.statusCode);
 
-  if (loginRes.statusCode === 200 && !sessionCookies['_stayfolio_session']) {
-    throw new Error('스테이폴리오 로그인 실패 (잘못된 이메일/비밀번호)');
+  if (res.statusCode !== 201 && res.statusCode !== 200) {
+    throw new Error(`스테이폴리오 로그인 실패: HTTP ${res.statusCode} - ${res.body.substring(0, 100)}`);
   }
 
-  const redirectUrl = loginRes.headers['location'];
-  if (redirectUrl) {
-    const redirectPath = redirectUrl.startsWith('http') ? new URL(redirectUrl).pathname : redirectUrl;
-    const redir = await request('GET', STAYFOLIO_HOST, redirectPath, null, {
-      'Cookie': cookiesToString(sessionCookies),
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    });
-    Object.assign(sessionCookies, parseCookies(redir.headers));
+  const cookies = parseCookies(res.headers);
+  if (!cookies['_stayfolio_session']) {
+    throw new Error('스테이폴리오 로그인 실패 (세션 쿠키 없음)');
   }
 
-  if (!sessionCookies['_stayfolio_session']) throw new Error('스테이폴리오 로그인 실패 (세션 쿠키 없음)');
-
-  console.log('[Stayfolio] 로그인 성공');
-  return sessionCookies;
+  console.log('[Stayfolio] 로그인 성공, 쿠키:', Object.keys(cookies).join(', '));
+  return cookies;
 }
 
 async function createBooking(cookies, {
@@ -135,21 +109,6 @@ async function createBooking(cookies, {
 
   console.log(`[Stayfolio] 수기예약 생성 완료 / 예약ID: ${bookingId}`);
   return { bookingId, statusCode: res.statusCode };
-}
-
-function extractCsrf(html) {
-  const patterns = [
-    /name="csrf-token"[^>]*content="([^"]+)"/,
-    /content="([^"]+)"[^>]*name="csrf-token"/,
-    /name="authenticity_token"[^>]*value="([^"]+)"/,
-    /value="([^"]+)"[^>]*name="authenticity_token"/,
-    /<meta[^>]*csrf-token[^>]*content="([^"]+)"/i,
-  ];
-  for (const p of patterns) {
-    const m = html.match(p);
-    if (m && m[1]) return m[1];
-  }
-  return null;
 }
 
 function request(method, host, path, body, headers) {
