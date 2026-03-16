@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AroundFollie 체크인</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;font-size:14px}
+.topbar{background:#fff;border-bottom:1px solid #e5e5e5;padding:12px 16px;position:sticky;top:0;z-index:100}
+.topbar h1{font-size:16px;font-weight:700;margin-bottom:6px}
+.date-nav{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.nav-btn{background:#f5f4f0;border:none;border-radius:20px;padding:5px 14px;font-size:13px;cursor:pointer;color:#555}
+.nav-btn:hover{background:#ebebeb}
+.day-lbl{font-size:14px;font-weight:600;min-width:36px;text-align:center}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{background:#f5f4f0;border-radius:10px;padding:5px 12px;text-align:center}
+.sn{font-size:18px;font-weight:700}.sn.warn{color:#d14343}.sn.ok{color:#2d8a4e}
+.sl{font-size:10px;color:#888;margin-top:1px}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e5e5e5;padding:0 16px}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;font-size:14px;cursor:pointer;color:#888;font-weight:500}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a}
+.content{padding:12px 16px;max-width:720px;margin:0 auto}
+.filter-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbtn{background:#fff;border:1px solid #e5e5e5;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;color:#666}
+.fbtn.active{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+.card{background:#fff;border-radius:14px;margin-bottom:10px;overflow:hidden;border:1px solid #e8e8e8;transition:border-color 0.15s}
+.card.done-card{opacity:0.55}
+.ch{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;user-select:none}
+.rb{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.rl{background:#ede9fe;color:#5b21b6}.ra{background:#d1fae5;color:#065f46}.rc{background:#fef3c7;color:#92400e}.rs{background:#dbeafe;color:#1e40af}
+.cm{flex:1;min-width:0}
+.gn{font-size:14px;font-weight:700;color:#1a1a1a}
+.rn{font-size:12px;color:#888;margin-top:1px}
+.cs{font-size:12px;color:#666;margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+.bgs{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.bg{font-size:11px;padding:2px 7px;border-radius:8px;font-weight:500}
+.bp{background:#fee2e2;color:#b91c1c}.bo{background:#d1fae5;color:#065f46}
+.bd{background:#d1fae5;color:#065f46}.bw{background:#fef3c7;color:#92400e}
+.bm{background:#dbeafe;color:#1e40af}.bf{background:#fce7f3;color:#9d174d}
+.ebtn{background:#f5f4f0;border:none;border-radius:20px;padding:4px 11px;font-size:11px;cursor:pointer;color:#555;flex-shrink:0}
+.cb{border-top:1px solid #f0f0f0;padding:14px;display:none}
+.cb.open{display:block}
+.sec-lbl{font-size:10px;color:#aaa;letter-spacing:0.5px;text-transform:uppercase;font-weight:600;margin:11px 0 7px}
+.sec-lbl:first-child{margin-top:0}
+.ir{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.ir label{font-size:12px;color:#666;min-width:68px;flex-shrink:0}
+.ir input,.ir select,.ir textarea{flex:1;font-size:13px;border:1px solid #e5e5e5;border-radius:8px;padding:6px 9px;background:#fff;color:#1a1a1a}
+.ir textarea{resize:vertical;min-height:54px}
+.div{height:1px;background:#f0f0f0;margin:10px 0}
+.paybox{background:#fafafa;border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #f0f0f0}
+.paytitle{font-size:11px;color:#666;margin-bottom:7px;font-weight:700}
+.payrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px}
+.payitem{display:flex;flex-direction:column;gap:2px}
+.payitem label{font-size:10px;color:#aaa}
+.payitem input{font-size:13px;border:1px solid #e5e5e5;border-radius:8px;padding:5px 8px;background:#fff}
+.bfbox{background:#fff0f7;border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #f9a8d4}
+.bftitle{font-size:11px;color:#9d174d;margin-bottom:7px;font-weight:700}
+.bfrow{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;align-items:center}
+.bfrow input,.bfrow select{font-size:13px;border:1px solid #f9a8d4;border-radius:8px;padding:5px 8px;background:#fff}
+.ckrow{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px}
+.cki{display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer}
+.cki input{width:15px;height:15px;cursor:pointer;accent-color:#1a1a1a}
+.sbtn{width:100%;padding:10px;background:#1a1a1a;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;margin-top:3px}
+.sbtn:active{opacity:0.85}
+.brief-sec{margin-bottom:18px}
+.brief-title{font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.brief-title span{font-size:12px;color:#888;font-weight:400}
+.brief-card{background:#fff;border-radius:14px;overflow:hidden;border:1px solid #e8e8e8}
+.brow{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid #f5f5f5}
+.brow:last-child{border-bottom:none}
+.brb{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.binfo{flex:1;min-width:0}
+.bname{font-size:13px;font-weight:700}
+.bsub{font-size:11px;color:#888;margin-top:1px}
+.bcheck{display:flex;align-items:center;gap:5px;font-size:12px;color:#555;cursor:pointer;flex-shrink:0}
+.bcheck input{width:15px;height:15px;cursor:pointer;accent-color:#1a1a1a}
+.empty{text-align:center;padding:2.5rem;color:#bbb;font-size:14px}
+.loading{text-align:center;padding:3rem;color:#bbb}
+.err{text-align:center;padding:2rem;color:#d14343;font-size:13px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="date-nav">
+    <button class="nav-btn" onclick="chDay(-1)">← 어제</button>
+    <span class="day-lbl" id="day-lbl">오늘</span>
+    <button class="nav-btn" onclick="chDay(1)">내일 →</button>
+  </div>
+  <h1 id="pg-title">체크인 리스트</h1>
+  <div class="stats" id="stats-row"></div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="swTab('checkin',this)">체크인 리스트</button>
+  <button class="tab" onclick="swTab('brief',this)">아침 브리핑</button>
+</div>
+<div class="content">
+  <div id="tab-checkin">
+    <div class="filter-bar">
+      <button class="fbtn active" onclick="setF('all',this)">전체</button>
+      <button class="fbtn" onclick="setF('in',this)">체크인</button>
+      <button class="fbtn" onclick="setF('out',this)">체크아웃</button>
+      <button class="fbtn" onclick="setF('pay',this)">현장결제</button>
+      <button class="fbtn" onclick="setF('option',this)">옵션있음</button>
+      <button class="fbtn" onclick="setF('done',this)">완료</button>
+    </div>
+    <div id="card-list"><div class="loading">불러오는 중...</div></div>
+  </div>
+  <div id="tab-brief" style="display:none">
+    <div id="brief-content"><div class="loading">불러오는 중...</div></div>
+  </div>
+</div>
+<script>
+const ROOMS={LA:{l:'LA',c:'rl'},LB:{l:'LB',c:'rl'},TA:{l:'TA',c:'rl'},TB:{l:'TB',c:'rl'},'17ft':{l:'17ft',c:'ra'},'27ft':{l:'27ft',c:'ra'},'31ft':{l:'31ft',c:'ra'},'31ft+':{l:'31+',c:'ra'},CA:{l:'CA',c:'rc'},CB:{l:'CB',c:'rc'},SA:{l:'SA',c:'rs'},SB:{l:'SB',c:'rs'},SF:{l:'SF',c:'rs'}};
+const STAFF=['이윤조','김진아','김동원','배가연'];
+let curDate=getTodayStr(),curFilter='all',curTab='checkin',pageData={checkin:[],checkout:[],memos:{}},states={};
+function getTodayStr(){const d=new Date(),kst=new Date(d.getTime()+9*60*60*1000);return kst.toISOString().slice(0,10)}
+function addDays(s,n){const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+function fmtTitle(s){const d=new Date(s+'T00:00:00');const days=['일','월','화','수','목','금','토'];return d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+days[d.getDay()]+')'}
+function getDayLbl(s){const t=getTodayStr();return s===t?'오늘':s===addDays(t,-1)?'어제':s===addDays(t,1)?'내일':''}
+function getState(id){if(!states[id])states[id]={done:false,paid:false,pillow:false,cleaned:false,staff:'',inspector:'',time:'16:00',coTime:'11:00',plate:'',note:'',bfTime:'09:00',bfMenu:'기본',expanded:false};return states[id]}
+function chDay(d){curDate=addDays(curDate,d);loadData()}
+function swTab(t,btn){curTab=t;document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-checkin').style.display=t==='checkin'?'block':'none';document.getElementById('tab-brief').style.display=t==='brief'?'block':'none';if(t==='brief')renderBrief()}
+function setF(f,btn){curFilter=f;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards()}
+function loadData(){
+  document.getElementById('pg-title').textContent=fmtTitle(curDate);
+  document.getElementById('day-lbl').textContent=getDayLbl(curDate);
+  document.getElementById('card-list').innerHTML='<div class="loading">불러오는 중...</div>';
+  fetch('/checkin-list?date='+curDate).then(r=>r.json()).then(d=>{
+    if(d.error){document.getElementById('card-list').innerHTML='<div class="err">오류: '+d.error+'</div>';return}
+    pageData=d;
+    if(d.memos)Object.entries(d.memos).forEach(([rc,m])=>{const s=getState(curDate+'_'+rc);Object.assign(s,m)});
+    updateStats();
+    if(curTab==='checkin')renderCards();else renderBrief();
+  }).catch(e=>{document.getElementById('card-list').innerHTML='<div class="err">로드 실패</div>'});
+}
+function updateStats(){
+  const ci=pageData.checkin||[],co=pageData.checkout||[];
+  const done=ci.filter(r=>getState(curDate+'_'+r.roomCode).done).length;
+  document.getElementById('stats-row').innerHTML=
+    '<div class="stat"><div class="sn">'+ci.length+'</div><div class="sl">체크인</div></div>'+
+    '<div class="stat"><div class="sn">'+co.length+'</div><div class="sl">체크아웃</div></div>'+
+    '<div class="stat"><div class="sn warn">'+ci.filter(r=>r.payNeeded>0).length+'</div><div class="sl">현장결제</div></div>'+
+    '<div class="stat"><div class="sn ok">'+done+'</div><div class="sl">완료</div></div>';
+}
+function renderCards(){
+  const items=[...(pageData.checkin||[]).map(r=>({...r,type:'in'})),...(pageData.checkout||[]).map(r=>({...r,type:'out'}))];
+  const filtered=items.filter(r=>{
+    if(curFilter==='in')return r.type==='in';
+    if(curFilter==='out')return r.type==='out';
+    if(curFilter==='pay')return r.payNeeded>0;
+    if(curFilter==='option')return r.options&&r.options.length>0;
+    if(curFilter==='done')return getState(curDate+'_'+r.roomCode).done;
+    return true;
+  });
+  if(!filtered.length){document.getElementById('card-list').innerHTML='<div class="empty">해당 조건의 항목 없음</div>';return}
+  document.getElementById('card-list').innerHTML=filtered.map(r=>mkCard(r)).join('');
+}
+function mkCard(r){
+  const id=curDate+'_'+r.roomCode,st=getState(id),rm=ROOMS[r.roomCode]||{l:r.roomCode,c:'rl'};
+  const isOut=r.type==='out';
+  const chLbl={STAYFOLIO:'스테이폴리오',NAVER:'네이버',AIRBNB:'에어비앤비',ONDA:'온다'}[r.channel]||r.channel||'';
+  const sBg=st.done?'<span class="bg bd">완료</span>':isOut?'<span class="bg bm">체크아웃</span>':'<span class="bg bw">대기중</span>';
+  const pBg=r.payNeeded>0?'<span class="bg bp">현장결제 \u20a9'+r.payNeeded.toLocaleString()+'</span>':'';
+  const bfBg=r.breakfast>0?'<span class="bg bf">조식 '+r.breakfast+'인</span>':'';
+  const oBgs=(r.options||[]).map(o=>'<span class="bg bo">'+o+'</span>').join('');
+  const sOpts=STAFF.map(s=>'<option'+(st.staff===s?' selected':'')+'>'+s+'</option>').join('');
+  const iOpts=STAFF.map(s=>'<option'+(st.inspector===s?' selected':'')+'>'+s+'</option>').join('');
+  const bfSec=r.breakfast>0?'<div class="bfbox"><div class="bftitle">조식 정보</div><div class="bfrow"><span>'+r.breakfast+'인</span><input type="time" id="bft-'+id+'" value="'+(st.bfTime||'09:00')+'"><select id="bfm-'+id+'"><option>기본</option><option>곰탕</option><option>비빔밥</option><option>채식</option></select></div></div>':'';
+  const pSec=r.payNeeded>0?'<div class="paybox"><div class="paytitle">현장 결제</div><div class="payrow"><div class="payitem"><label>금액</label><input type="number" id="pay-'+id+'" value="'+r.payNeeded+'"></div></div></div>':'';
+  const ciF=!isOut?'<div class="ir"><label>체크인 시간</label><input type="time" id="cit-'+id+'" value="'+(st.time||'16:00')+'" style="max-width:110px"></div><div class="ir"><label>차량번호</label><input type="text" id="pl-'+id+'" value="'+(st.plate||'')+'" placeholder="미등록"></div><div class="ir"><label>담당자</label><select id="st-'+id+'"><option value="">선택</option>'+sOpts+'</select></div><div class="ir"><label>검수자</label><select id="ins-'+id+'"><option value="">선택</option>'+iOpts+'</select></div>':'<div class="ir"><label>체크아웃 시간</label><input type="time" id="cot-'+id+'" value="'+(st.coTime||'11:00')+'" style="max-width:110px"></div>';
+  const ckB=!isOut?'<div class="ckrow"><label class="cki"><input type="checkbox" id="ck-done-'+id+'" '+(st.done?'checked':'')+' onchange="markDone(''+id+'',this.checked)"> 체크인 완료</label>'+(r.payNeeded>0?'<label class="cki"><input type="checkbox" id="ck-paid-'+id+'" '+(st.paid?'checked':'')+'> 결제 완료</label>':'')+'<label class="cki"><input type="checkbox" id="ck-pil-'+id+'" '+(st.pillow?'checked':'')+'> 추가침구</label><label class="cki"><input type="checkbox" id="ck-cl-'+id+'" '+(st.cleaned?'checked':'')+'> 청소 완료</label></div>':'<div class="ckrow"><label class="cki"><input type="checkbox" id="ck-done-'+id+'" '+(st.done?'checked':'')+' onchange="markDone(''+id+'',this.checked)"> 체크아웃 완료</label><label class="cki"><input type="checkbox" id="ck-cl-'+id+'" '+(st.cleaned?'checked':'')+'> 청소 완료</label></div>';
+  return '<div class="card'+(st.done?' done-card':'')+'" id="card-'+id+'"><div class="ch" onclick="tog(''+id+'')"><div class="rb '+rm.c+'">'+rm.l+'</div><div class="cm"><div class="gn">'+r.guest+'</div><div class="rn">'+(r.roomFull||r.roomCode)+'</div><div class="cs"><span>'+(r.country||'')+' '+(r.phone||'')+'</span>'+(r.adults?'<span>성인 '+r.adults+(r.children?' · 아동 '+r.children:'')+'명</span>':'')+(chLbl?'<span style="color:#bbb">'+chLbl+'</span>':'')+'</div><div class="bgs">'+sBg+pBg+bfBg+oBgs+'</div></div><button class="ebtn" id="eb-'+id+'">'+(st.expanded?'접기':'상세')+'</button></div><div class="cb'+(st.expanded?' open':'')+'" id="bd-'+id+'">'+(r.options&&r.options.length?'<div class="sec-lbl">예약 옵션</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">'+(r.options||[]).map(o=>'<span style="background:#f5f4f0;border-radius:20px;padding:3px 10px;font-size:12px">'+o+'</span>').join('')+'</div>':'')+bfSec+pSec+'<div class="div"></div><div class="sec-lbl">현장 입력</div>'+ciF+'<div class="ir"><label>특이사항</label><textarea id="nt-'+id+'" placeholder="요청사항, 현장 메모...">'+(st.note||r.note||'')+'</textarea></div>'+ckB+'<button class="sbtn" onclick="save(''+id+'',''+r.roomCode+'')">저장</button></div></div>';
+}
+function tog(id){const st=getState(id);st.expanded=!st.expanded;document.getElementById('bd-'+id)?.classList.toggle('open',st.expanded);const b=document.getElementById('eb-'+id);if(b)b.textContent=st.expanded?'접기':'상세';document.getElementById('card-'+id)?.classList.toggle('expanded',st.expanded)}
+function markDone(id,val){getState(id).done=val;document.getElementById('card-'+id)?.classList.toggle('done-card',val);updateStats()}
+function save(id,roomCode){
+  const st=getState(id),gv=s=>{const e=document.getElementById(s);return e?e.value:''},gc=s=>{const e=document.getElementById(s);return e?e.checked:false};
+  st.time=gv('cit-'+id);st.coTime=gv('cot-'+id);st.plate=gv('pl-'+id);st.staff=gv('st-'+id);st.inspector=gv('ins-'+id);st.note=gv('nt-'+id);st.done=gc('ck-done-'+id);st.paid=gc('ck-paid-'+id);st.pillow=gc('ck-pil-'+id);st.cleaned=gc('ck-cl-'+id);st.bfTime=gv('bft-'+id);st.bfMenu=gv('bfm-'+id);
+  if(st.done)document.getElementById('card-'+id)?.classList.add('done-card');
+  const btn=document.querySelector('#bd-'+id+' .sbtn');
+  if(btn){btn.textContent='저장 중...';btn.disabled=true}
+  fetch('/save-memo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:curDate,roomCode,...st})}).then(r=>r.json()).then(()=>{if(btn){btn.textContent='저장됨 ✓';btn.style.background='#2d8a4e';setTimeout(()=>{btn.textContent='저장';btn.style.background='';btn.disabled=false},2000)}updateStats()}).catch(()=>{if(btn){btn.textContent='저장 실패';btn.style.background='#d14343';setTimeout(()=>{btn.textContent='저장';btn.style.background='';btn.disabled=false},2000)}});
+}
+function renderBrief(){
+  const ci=pageData.checkin||[],co=pageData.checkout||[];
+  let html='';
+  const bfTeams=ci.filter(r=>r.breakfast>0);
+  html+='<div class="brief-sec"><div class="brief-title">조식 <span>오늘 나가는 조식</span></div>';
+  html+=bfTeams.length?'<div class="brief-card">'+bfTeams.map(r=>{const rm=ROOMS[r.roomCode]||{l:r.roomCode,c:'rl'},st=getState(curDate+'_'+r.roomCode);return '<div class="brow"><div class="brb '+rm.c+'">'+rm.l+'</div><div class="binfo"><div class="bname">'+r.guest+'</div><div class="bsub">'+r.breakfast+'인 · '+(st.bfTime||'09:00')+' · '+(st.bfMenu||'기본')+'</div></div><label class="bcheck"><input type="checkbox"> 서브 완료</label></div>'}).join('')+'</div>':'<div class="empty" style="padding:1.5rem">오늘 조식 없음</div>';
+  html+='</div>';
+  const toCollect=co.filter(r=>r.options&&r.options.some(o=>o==='Weber Grill'||o==='Fire Pit'));
+  html+='<div class="brief-sec"><div class="brief-title">옵션 회수 <span>오늘 아침 회수</span></div>';
+  html+=toCollect.length?'<div class="brief-card">'+toCollect.map(r=>{const rm=ROOMS[r.roomCode]||{l:r.roomCode,c:'rl'},items=r.options.filter(o=>o==='Weber Grill'||o==='Fire Pit');return '<div class="brow"><div class="brb '+rm.c+'">'+rm.l+'</div><div class="binfo"><div class="bname">'+r.guest+'</div><div class="bsub">'+items.join(' · ')+'</div></div><div style="display:flex;gap:4px">'+items.map(o=>'<span class="bg bo">'+o+'</span>').join('')+'</div><label class="bcheck" style="margin-left:8px"><input type="checkbox"> 완료</label></div>'}).join('')+'</div>':'<div class="empty" style="padding:1.5rem">회수 항목 없음</div>';
+  html+='</div>';
+  const toInstall=ci.filter(r=>r.options&&r.options.some(o=>o==='Weber Grill'||o==='Fire Pit'));
+  html+='<div class="brief-sec"><div class="brief-title">옵션 설치 <span>오늘 체크인 전 설치</span></div>';
+  html+=toInstall.length?'<div class="brief-card">'+toInstall.map(r=>{const rm=ROOMS[r.roomCode]||{l:r.roomCode,c:'rl'},items=r.options.filter(o=>o==='Weber Grill'||o==='Fire Pit');return '<div class="brow"><div class="brb '+rm.c+'">'+rm.l+'</div><div class="binfo"><div class="bname">'+r.guest+'</div><div class="bsub">'+items.join(' · ')+'</div></div><div style="display:flex;gap:4px">'+items.map(o=>'<span class="bg bo">'+o+'</span>').join('')+'</div><label class="bcheck" style="margin-left:8px"><input type="checkbox"> 완료</label></div>'}).join('')+'</div>':'<div class="empty" style="padding:1.5rem">설치 항목 없음</div>';
+  html+='</div>';
+  html+='<div class="brief-sec"><div class="brief-title">청소 현황 <span>오늘 체크아웃 객실</span></div>';
+  html+=co.length?'<div class="brief-card">'+co.map(r=>{const rm=ROOMS[r.roomCode]||{l:r.roomCode,c:'rl'},nextIn=ci.find(c=>c.roomCode===r.roomCode),st=getState(curDate+'_'+r.roomCode);return '<div class="brow"><div class="brb '+rm.c+'">'+rm.l+'</div><div class="binfo"><div class="bname">'+rm.l+' - '+(r.roomFull||r.roomCode)+'</div><div class="bsub">퇴실: '+r.guest+(nextIn?' → 입실: '+nextIn.guest:' → 공실')+'</div></div><span class="bg '+(nextIn?'bw':'bm')+'" style="margin-right:8px">'+(nextIn?'청소 후 입실':'청소 후 공실')+'</span><label class="bcheck"><input type="checkbox" '+(st.cleaned?'checked':'')+' onchange="getState(''+curDate+'_'+r.roomCode+'').cleaned=this.checked"> 완료</label></div>'}).join('')+'</div>':'<div class="empty" style="padding:1.5rem">오늘 체크아웃 없음</div>';
+  html+='</div>';
+  document.getElementById('brief-content').innerHTML=html;
+}
+loadData();
+</script>
+</body>
+</html>
