@@ -156,4 +156,36 @@ function cookiesToString(cookies) {
   return Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
 }
 
-module.exports = { login, createBooking, ROOM_ID_MAP };
+
+async function cancelBooking(cookies, ondaBookingId) {
+    // 예약 목록에서 관리자 메모에 ONDA 예약번호가 있는 예약 검색
+    const searchRes = await request('GET', STAYFOLIO_HOST,
+                                        '/places/' + PLACE_SLUG + '/bookings.json?per=100', null, {
+                                              'Cookie': cookiesToString(cookies),
+                                              'Accept': 'application/json',
+                                        });
+    if (searchRes.statusCode !== 200) throw new Error('예약 검색 실패: HTTP ' + searchRes.statusCode);
+    const data = JSON.parse(searchRes.body);
+    const bookings = data.bookings || data;
+    const booking = bookings.find(b =>
+          b.admin_memo && b.admin_memo.includes(ondaBookingId)
+        );
+    if (!booking) throw new Error('ONDA 예약번호 ' + ondaBookingId + '에 해당하는 스테이폴리오 예약 없음');
+    console.log('[Stayfolio] 취소 대상 예약 ID:', booking.id);
+
+    // 예약 취소 (DELETE)
+    const cancelRes = await request('DELETE', STAYFOLIO_HOST,
+                                        '/places/' + PLACE_SLUG + '/bookings/' + booking.id + '.json',
+                                        JSON.stringify({ booking: { cancel_reason: 'ONDA 취소' } }), {
+                                              'Cookie': cookiesToString(cookies),
+                                              'Content-Type': 'application/json',
+                                              'Accept': 'application/json',
+                                        });
+    console.log('[Stayfolio] 예약 취소 status:', cancelRes.statusCode);
+    if (cancelRes.statusCode !== 200 && cancelRes.statusCode !== 204) {
+          throw new Error('예약 취소 실패: HTTP ' + cancelRes.statusCode + ' - ' + cancelRes.body);
+    }
+    console.log('[Stayfolio] 예약 취소 완료 bookingId:', booking.id);
+    return { success: true, bookingId: booking.id };
+}
+module.exports = { login, createBooking, cancelBooking, ROOM_ID_MAP };
