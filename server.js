@@ -84,7 +84,7 @@ app.post('/open-vacancy', async (req, res) => {
 app.post('/stayfolio-create', async (req, res) => {
   if (!verifySecret(req, res)) return;
   try {
-    const result = await createStayfolioBooking(req.body);
+    const result = await createBooking(req.body);
     res.json(result);
   } catch (e) {
     console.error('[stayfolio-create] error:', e.message);
