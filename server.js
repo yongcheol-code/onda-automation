@@ -109,7 +109,14 @@ const result = await createBooking(cookies, {
   adults: adults || 2,
   children: children || 0,
   infants: infants || 0,
-  adminMemo: '[ONDA 자동생성]\n예약번호: ' + (ondaBookingId || '') + '\n예약자(온다): ' + (ondaGuestName || ''),
+  adminMemo: [
+  '[ONDA 자동생성]',
+  '예약번호: ' + (ondaBookingId || ''),
+  '예약자(온다): ' + (ondaGuestName || ''),
+  req.body.countryCode ? '연락처: ' + req.body.countryCode + ' ' + (phone || '') : '',
+  req.body.price ? '금액: ' + req.body.price : '',
+  req.body.note ? '고객요청: ' + req.body.note : '',
+].filter(Boolean).join('\n'),
   price: price || '0'
 });
     res.json(result);
