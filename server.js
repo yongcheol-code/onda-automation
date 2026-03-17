@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const { login, createBooking } = require('./stayfolio');
 const { getCheckinData, saveMemo } = require('./checkin');
+const { closeRooms, openRooms } = require('./onda-api');
 
 const app = express();
 app.use(express.json());
