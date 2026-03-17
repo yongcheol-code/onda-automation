@@ -119,6 +119,22 @@ const result = await createBooking(cookies, {
   }
 });
 
+// ── 스테이폴리오 예약 취소 ─────────────────────────
+app.post('/stayfolio-cancel', async (req, res) => {
+  if (!verifySecret(req, res)) return;
+  try {
+    const { ondaBookingId, guestName, room, dateRange } = req.body;
+    const sfEmail = process.env.SF_EMAIL;
+    const sfPassword = process.env.SF_PASSWORD;
+    const cookies = await login(sfEmail, sfPassword);
+    const result = await cancelBooking(cookies, ondaBookingId);
+    res.json(result);
+  } catch (e) {
+    console.error('[stayfolio-cancel] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`[onda-automation] Server running on port ${PORT}`);
 });
