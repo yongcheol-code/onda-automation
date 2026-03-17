@@ -86,8 +86,32 @@ app.post('/stayfolio-create', async (req, res) => {
   try {
     const sfEmail = process.env.SF_EMAIL;
     const sfPassword = process.env.SF_PASSWORD;
-    const cookies = await login(sfEmail, sfPassword);
-    const result = await createBooking(cookies, req.body);
+    const ROOM_ID_MAP = {
+  'Lodge Loft A': 96, 'Lodge Loft B': 97,
+  'Lodge Twin A': 98, 'Lodge Twin B': 99,
+  'Lodge Suite A': 100, 'Lodge Suite B': 101,
+  'Lodge Suite Family': 102,
+  'Airstream 17ft': 117, 'Airstream 27ft': 118,
+  'Airstream 31ft': 119, 'Airstream 31ft +': 799,
+  'Cabin A': 464, 'Cabin B': 465
+};
+const { room, checkin, checkout, guestName, phone,
+        countryCode, adults, children, infants,
+        ondaBookingId, ondaGuestName, price } = req.body;
+const roomId = ROOM_ID_MAP[room];
+if (!roomId) throw new Error('알 수 없는 객실명: ' + room);
+const cookies = await login(sfEmail, sfPassword);
+const result = await createBooking(cookies, {
+  roomId, checkin, checkout,
+  guestName: guestName || '',
+  phone: (phone || '').replace(/[^0-9]/g, ''),
+  countryCode: countryCode || '+82',
+  adults: adults || 2,
+  children: children || 0,
+  infants: infants || 0,
+  adminMemo: '[ONDA 자동생성]\n예약번호: ' + (ondaBookingId || '') + '\n예약자(온다): ' + (ondaGuestName || ''),
+  price: price || '0'
+});
     res.json(result);
   } catch (e) {
     console.error('[stayfolio-create] error:', e.message);
