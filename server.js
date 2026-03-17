@@ -1,7 +1,6 @@
 'use strict';
 const express = require('express');
 const path = require('path');
-const { closeVacancy, openVacancy } = require('./onda-api');
 const { login, createBooking } = require('./stayfolio');
 const { getCheckinData, saveMemo } = require('./checkin');
 
@@ -59,7 +58,7 @@ app.post('/close-vacancy', async (req, res) => {
   if (!verifySecret(req, res)) return;
   try {
     const { roomId, checkin, checkout, memo } = req.body;
-    const result = await closeVacancy(roomId, checkin, checkout, memo);
+    const result = await closeRooms(roomId, checkin, checkout, memo);
     res.json(result);
   } catch (e) {
     console.error('[close-vacancy] error:', e.message);
@@ -72,7 +71,7 @@ app.post('/open-vacancy', async (req, res) => {
   if (!verifySecret(req, res)) return;
   try {
     const { roomId, checkin, checkout } = req.body;
-    const result = await openVacancy(roomId, checkin, checkout);
+    const result = await openRooms(roomId, checkin, checkout);
     res.json(result);
   } catch (e) {
     console.error('[open-vacancy] error:', e.message);
