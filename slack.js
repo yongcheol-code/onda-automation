@@ -1,14 +1,8 @@
 const fetch = require('node-fetch');
 
-/**
- * 슬랙으로 메시지 전송
- */
 async function sendSlack(text) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
-  if (!webhookUrl) {
-    console.warn('[Slack] SLACK_WEBHOOK_URL 미설정, 알림 스킵');
-    return;
-  }
+  if (!webhookUrl) return;
   try {
     await fetch(webhookUrl, {
       method: 'POST',
@@ -20,4 +14,21 @@ async function sendSlack(text) {
   }
 }
 
-module.exports = { sendSlack };
+async function postSlackThread(channel, thread_ts, text) {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) return;
+  try {
+    await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ channel, thread_ts, text }),
+    });
+  } catch (e) {
+    console.error('[Slack] 스레드 댓글 실패:', e.message);
+  }
+}
+
+module.exports = { sendSlack, postSlackThread };
