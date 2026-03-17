@@ -117,7 +117,7 @@ const result = await createBooking(cookies, {
   req.body.price ? '금액: ' + req.body.price : '',
   req.body.note ? '고객요청: ' + req.body.note : '',
 ].filter(Boolean).join('\n'),
-  price: price || '0'
+  price: String(parseInt((price || '0').replace(/[^0-9]/g, '')) || 0)
 });
     res.json(result);
   } catch (e) {
