@@ -67,7 +67,8 @@ app.post('/close-vacancy', async (req, res) => {
                   'Airstream 31ft': '1704044', 'Airstream 31ft +': '1704045',
                   'Cabin A': '1704046', 'Cabin B': '1704047',
           };
-          const { room, dates, memo } = req.body;
+    console.log('[close-vacancy] body:', JSON.stringify(req.body));
+      const { room, dates, memo } = req.body;
           const roomId = ROOM_ID_MAP[room];
           if (!roomId) throw new Error('알 수 없는 객실명: ' + room);
           const results = [];
