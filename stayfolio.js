@@ -168,9 +168,22 @@ async function cancelBooking(cookies, ondaBookingId) {
     const data = JSON.parse(searchRes.body);
     console.log('[SF Cancel] 검색 응답:', JSON.stringify(data).substring(0, 300));
     const bookings = Array.isArray(data.items) ? data.items : Array.isArray(data.bookings) ? data.bookings : Array.isArray(data) ? data : [];
-    const booking = bookings.find(b =>
-          b.admin_memo && b.admin_memo.includes(ondaBookingId)
-        );
+    let booking = null;
+    for (const b of bookings) {
+    const detailRes = await request('GET', STAYFOLIO_HOST,
+    '/places/' + PLACE_SLUG + '/bookings/' + b.id + '.json', null, {
+    'Cookie': cookiesToString(cookies),
+    'Accept': 'application/json',
+    });
+    if (detailRes.statusCode === 200) {
+    const detail = JSON.parse(detailRes.body);
+    if (detail.admin_memo && detail.admin_memo.includes(ondaBookingId)) {
+      booking = detail;
+      break;
+    }
+  }
+}
+if (!booking) throw new Error('ONDA 예약번호 ' + ondaBookingId + '에 해당하는 스테이폴리오 예약 없음');
     if (!booking) throw new Error('ONDA 예약번호 ' + ondaBookingId + '에 해당하는 스테이폴리오 예약 없음');
     console.log('[Stayfolio] 취소 대상 예약 ID:', booking.id);
 
