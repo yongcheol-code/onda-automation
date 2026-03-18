@@ -177,6 +177,7 @@ async function cancelBooking(cookies, ondaBookingId) {
     });
     if (detailRes.statusCode === 200) {
     const detail = JSON.parse(detailRes.body);
+    console.log('[SF Cancel] 상세 응답 admin_memo:', detail.admin_memo, 'id:', detail.id);
     if (detail.admin_memo && detail.admin_memo.includes(ondaBookingId)) {
       booking = detail;
       break;
