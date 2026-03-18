@@ -143,7 +143,8 @@ app.post('/stayfolio-cancel', async (req, res) => {
     const sfEmail = process.env.SF_EMAIL;
     const sfPassword = process.env.SF_PASSWORD;
     const cookies = await login(sfEmail, sfPassword);
-    const result = await cancelBooking(cookies, ondaBookingId);
+    const checkin = req.body.dateRange ? req.body.dateRange.split(' ~ ')[0].trim() : '';
+    const result = await cancelBooking(cookies, ondaBookingId, req.body.guestName || '', checkin);
     res.json(result);
   } catch (e) {
     console.error('[stayfolio-cancel] error:', e.message);
