@@ -160,7 +160,7 @@ function cookiesToString(cookies) {
 async function cancelBooking(cookies, ondaBookingId) {
     // 예약 목록에서 관리자 메모에 ONDA 예약번호가 있는 예약 검색
     const searchRes = await request('GET', STAYFOLIO_HOST,
-                                        '/places/' + PLACE_SLUG + '/bookings.json?per=100', null, {
+                                        '/places/' + PLACE_SLUG + '/bookings.json?per=200&q=' + encodeURIComponent(ondaBookingId), null, {
                                               'Cookie': cookiesToString(cookies),
                                               'Accept': 'application/json',
                                         });
