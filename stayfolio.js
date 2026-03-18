@@ -52,7 +52,7 @@ async function login(email, password) {
 async function createBooking(cookies, {
   roomId, checkin, checkout, guestName, phone,
   email = '', adults = 2, children = 0, infants = 0,
-  countryCode = '+82', adminMemo = '',
+  countryCode = '', adminMemo = '',
 }) {
   const payload = {
     status: 'ready',
@@ -61,7 +61,7 @@ async function createBooking(cookies, {
     paid_method_to_s: '계좌이체',
     booking_type: 'onda',
     phone: phone,
-    price: '0',
+    price: String(parseInt((price || '0').toString().replace(/[^0-9]/g, '')) || 0),
     adult_cnt: adults,
     child_cnt: children,
     baby_cnt: infants,
@@ -160,7 +160,7 @@ function cookiesToString(cookies) {
 async function cancelBooking(cookies, ondaBookingId) {
     // 예약 목록에서 관리자 메모에 ONDA 예약번호가 있는 예약 검색
     const searchRes = await request('GET', STAYFOLIO_HOST,
-                                        '/places/' + PLACE_SLUG + '/bookings.json?per=100', null, {
+                                        '/places/' + PLACE_SLUG + '/bookings.json?per=200&q=' + encodeURIComponent(ondaBookingId), null, {
                                               'Cookie': cookiesToString(cookies),
                                               'Accept': 'application/json',
                                         });
