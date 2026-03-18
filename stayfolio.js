@@ -167,7 +167,7 @@ async function cancelBooking(cookies, ondaBookingId) {
     if (searchRes.statusCode !== 200) throw new Error('예약 검색 실패: HTTP ' + searchRes.statusCode);
     const data = JSON.parse(searchRes.body);
     console.log('[SF Cancel] 검색 응답:', JSON.stringify(data).substring(0, 300));
-    const bookings = Array.isArray(data.bookings) ? data.bookings : Array.isArray(data) ? data : [];
+    const bookings = Array.isArray(data.items) ? data.items : Array.isArray(data.bookings) ? data.bookings : Array.isArray(data) ? data : [];
     const booking = bookings.find(b =>
           b.admin_memo && b.admin_memo.includes(ondaBookingId)
         );
