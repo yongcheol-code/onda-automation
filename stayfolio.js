@@ -52,7 +52,7 @@ async function login(email, password) {
 async function createBooking(cookies, {
   roomId, checkin, checkout, guestName, phone,
   email = '', adults = 2, children = 0, infants = 0,
-  countryCode = '', adminMemo = '',
+  countryCode = '', adminMemo = '', price = '0',
 }) {
   const payload = {
     status: 'ready',
