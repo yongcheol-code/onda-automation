@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const { login, createBooking } = require('./stayfolio');
 const { getCheckinData, saveMemo } = require('./checkin');
+const { getToken } = require('./auth');
 const { closeRooms, openRooms } = require('./onda-api');
 
 const app = express();
@@ -60,9 +61,7 @@ app.post('/close-vacancy', async (req, res) => {
   try {
     const { room, dates, memo } = req.body;
     if (!room) throw new Error('room 없음');
-    const token = Buffer.from(
-      `${process.env.ONDA_EMAIL}:${process.env.ONDA_PASSWORD}`
-    ).toString('base64');
+    const token = await getToken();
     const result = await closeRooms(token, room, dates, memo);
     res.json({ success: true, result });
   } catch (e) {
@@ -77,9 +76,7 @@ app.post('/open-vacancy', async (req, res) => {
   try {
     const { room, dates } = req.body;
     if (!room) throw new Error('room 없음');
-    const token = Buffer.from(
-      `${process.env.ONDA_EMAIL}:${process.env.ONDA_PASSWORD}`
-    ).toString('base64');
+    const token = await getToken();
     const result = await openRooms(token, room, dates);
     res.json({ success: true, result });
   } catch (e) {
