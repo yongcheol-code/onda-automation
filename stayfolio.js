@@ -157,7 +157,7 @@ function cookiesToString(cookies) {
 }
 
 
-async function cancelBooking(cookies, ondaBookingId) {
+async function cancelBooking(cookies, ondaBookingId, guestName = '', checkin = '') {
     // 예약 목록에서 관리자 메모에 ONDA 예약번호가 있는 예약 검색
     const searchRes = await request('GET', STAYFOLIO_HOST,
                                         '/places/' + PLACE_SLUG + '/bookings.json?per=200', null, {
@@ -182,6 +182,13 @@ async function cancelBooking(cookies, ondaBookingId) {
       booking = detail;
       break;
     }
+    // admin_memo로 못 찾으면 이름+체크인으로 매칭
+    if (guestName && checkin &&
+      detail.name === guestName &&
+      detail.start && detail.start.startsWith(checkin)) {
+    booking = detail;
+    break;
+  }
   }
 }
 if (!booking) throw new Error('ONDA 예약번호 ' + ondaBookingId + '에 해당하는 스테이폴리오 예약 없음');
