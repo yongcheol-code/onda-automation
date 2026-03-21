@@ -60,7 +60,7 @@ async function createBooking(cookies, {
     paid_method: 'Transfer',
     paid_method_to_s: '계좌이체',
     booking_type: 'onda',
-    phone: phone,
+    phone: phone || '00000000000',
     price: String(parseInt((price || '0').toString().replace(/[^0-9]/g, '')) || 0),
     adult_cnt: adults,
     child_cnt: children,
