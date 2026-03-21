@@ -196,15 +196,15 @@ async function cancelBooking(cookies, ondaBookingId, guestName = '', checkin = '
   console.log('[Stayfolio] 취소 대상 예약 ID:', booking.id);
   console.log('[SF Cancel] 취소 URL ID:', booking.old_id || booking.id, '/ old_id:', booking.old_id, '/ id:', booking.id);
 
-  const cancelBody = JSON.stringify({ booking: { host_cancel_reason: 'ONDA 취소' } });
+  const cancelBody = 'booking[host_cancel_reason]=ONDA+%EC%B7%A8%EC%86%8C&booking[select_cancel_reason]=%EA%B2%8C%EC%8A%A4%ED%8A%B8%EA%B0%80+%EC%98%88%EC%95%BD+%EC%B7%A8%EC%86%8C%EB%A5%BC+%EC%9B%90%ED%95%A9%EB%8B%88%EB%8B%A4.&booking[select_refund_price]=-2&booking[send_cancel_msg]=0';
   const cancelRes = await request('POST', STAYFOLIO_HOST,
-    '/places/' + PLACE_SLUG + '/bookings/' + (booking.old_id || booking.id) + '/cancel',
-    cancelBody, {
-      'Cookie': cookiesToString(cookies),
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-    });
+  '/places/' + PLACE_SLUG + '/bookings/' + (booking.old_id || booking.id) + '/cancel',
+  cancelBody, {
+    'Cookie': cookiesToString(cookies),
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Accept': 'application/json, text/javascript, */*; q=0.01',
+    'X-Requested-With': 'XMLHttpRequest',
+  });
 
   console.log('[Stayfolio] 예약 취소 status:', cancelRes.statusCode);
   console.log('[Stayfolio] 예약 취소 body:', cancelRes.body.substring(0, 200));
