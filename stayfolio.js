@@ -155,59 +155,66 @@ function parseCookies(headers, existing = {}) {
 function cookiesToString(cookies) {
   return Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
 }
-
-
 async function cancelBooking(cookies, ondaBookingId, guestName = '', checkin = '') {
-    // 예약 목록에서 관리자 메모에 ONDA 예약번호가 있는 예약 검색
-    const searchRes = await request('GET', STAYFOLIO_HOST,
-                                        '/places/' + PLACE_SLUG + '/bookings.json?per=200', null, {
-                                              'Cookie': cookiesToString(cookies),
-                                              'Accept': 'application/json',
-                                        });
-    if (searchRes.statusCode !== 200) throw new Error('예약 검색 실패: HTTP ' + searchRes.statusCode);
-    const data = JSON.parse(searchRes.body);
-    console.log('[SF Cancel] 검색 응답:', JSON.stringify(data).substring(0, 300));
-    const bookings = Array.isArray(data.items) ? data.items : Array.isArray(data.bookings) ? data.bookings : Array.isArray(data) ? data : [];
-    let booking = null;
-    for (const b of bookings) {
-    const detailRes = await request('GET', STAYFOLIO_HOST,
-    '/places/' + PLACE_SLUG + '/bookings/' + b.id + '.json', null, {
-    'Cookie': cookiesToString(cookies),
-    'Accept': 'application/json',
+  const searchRes = await request('GET', STAYFOLIO_HOST,
+    '/places/' + PLACE_SLUG + '/bookings.json?per=200', null, {
+      'Cookie': cookiesToString(cookies),
+      'Accept': 'application/json',
     });
-    if (detailRes.statusCode === 200) {
+  if (searchRes.statusCode !== 200) throw new Error('예약 검색 실패: HTTP ' + searchRes.statusCode);
+
+  const data = JSON.parse(searchRes.body);
+  console.log('[SF Cancel] 검색 응답:', JSON.stringify(data).substring(0, 300));
+  const bookings = Array.isArray(data.items) ? data.items
+    : Array.isArray(data.bookings) ? data.bookings
+    : Array.isArray(data) ? data : [];
+
+  let booking = null;
+  for (const b of bookings) {
+    const detailRes = await request('GET', STAYFOLIO_HOST,
+      '/places/' + PLACE_SLUG + '/bookings/' + b.id + '.json', null, {
+        'Cookie': cookiesToString(cookies),
+        'Accept': 'application/json',
+      });
+    if (detailRes.statusCode !== 200) continue;
     const detail = JSON.parse(detailRes.body);
     console.log('[SF Cancel] 상세 응답 admin_memo:', detail.admin_memo, 'id:', detail.id);
     if (detail.admin_memo && detail.admin_memo.includes(ondaBookingId)) {
       booking = detail;
       break;
     }
-    // admin_memo로 못 찾으면 이름+체크인으로 매칭
     if (guestName && checkin &&
       detail.name === guestName &&
       detail.start && detail.start.startsWith(checkin)) {
-    booking = detail;
-    break;
-  }
-  }
-}
-if (!booking) throw new Error('ONDA 예약번호 ' + ondaBookingId + '에 해당하는 스테이폴리오 예약 없음');
-    if (!booking) throw new Error('ONDA 예약번호 ' + ondaBookingId + '에 해당하는 스테이폴리오 예약 없음');
-    console.log('[Stayfolio] 취소 대상 예약 ID:', booking.id);
-
-    // 예약 취소 (DELETE)
-    const cancelRes = await request('POST', STAYFOLIO_HOST,
-    '/places/' + PLACE_SLUG + '/bookings/' + (booking.old_id || booking.id) + '/cancel',
-    JSON.stringify({ booking: { host_cancel_reason: 'ONDA 취소' } }), {
-                                              'Cookie': cookiesToString(cookies),
-                                              'Content-Type': 'application/json',
-                                              'Accept': 'application/json',
-                                        });
-    console.log('[Stayfolio] 예약 취소 status:', cancelRes.statusCode);
-    if (cancelRes.statusCode !== 200 && cancelRes.statusCode !== 204) {
-          throw new Error('예약 취소 실패: HTTP ' + cancelRes.statusCode + ' - ' + cancelRes.body);
+      booking = detail;
+      break;
     }
-    console.log('[Stayfolio] 예약 취소 완료 bookingId:', booking.id);
-    return { success: true, bookingId: booking.id };
+  }
+
+  if (!booking) throw new Error('ONDA 예약번호 ' + ondaBookingId + '에 해당하는 스테이폴리오 예약 없음');
+
+  console.log('[Stayfolio] 취소 대상 예약 ID:', booking.id);
+  console.log('[SF Cancel] 취소 URL ID:', booking.old_id || booking.id, '/ old_id:', booking.old_id, '/ id:', booking.id);
+
+  const cancelBody = JSON.stringify({ booking: { host_cancel_reason: 'ONDA 취소' } });
+  const cancelRes = await request('POST', STAYFOLIO_HOST,
+    '/places/' + PLACE_SLUG + '/bookings/' + (booking.old_id || booking.id) + '/cancel',
+    cancelBody, {
+      'Cookie': cookiesToString(cookies),
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    });
+
+  console.log('[Stayfolio] 예약 취소 status:', cancelRes.statusCode);
+  console.log('[Stayfolio] 예약 취소 body:', cancelRes.body.substring(0, 200));
+
+  if (cancelRes.statusCode !== 200 && cancelRes.statusCode !== 204) {
+    throw new Error('예약 취소 실패: HTTP ' + cancelRes.statusCode + ' - ' + cancelRes.body);
+  }
+
+  console.log('[Stayfolio] 예약 취소 완료 bookingId:', booking.id);
+  return { success: true, bookingId: booking.id };
 }
+
 module.exports = { login, createBooking, cancelBooking, ROOM_ID_MAP };
