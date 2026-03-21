@@ -196,9 +196,9 @@ if (!booking) throw new Error('ONDA 예약번호 ' + ondaBookingId + '에 해당
     console.log('[Stayfolio] 취소 대상 예약 ID:', booking.id);
 
     // 예약 취소 (DELETE)
-    const cancelRes = await request('PUT', STAYFOLIO_HOST,
-    '/places/' + PLACE_SLUG + '/bookings/' + booking.id + '.json',
-    JSON.stringify({ booking: { status: 'canceled', host_cancel_reason: 'ONDA 취소' } }), {
+    const cancelRes = await request('POST', STAYFOLIO_HOST,
+    '/places/' + PLACE_SLUG + '/bookings/' + booking.id + '/cancel',
+    JSON.stringify({ booking: { host_cancel_reason: 'ONDA 취소' } }), {
                                               'Cookie': cookiesToString(cookies),
                                               'Content-Type': 'application/json',
                                               'Accept': 'application/json',
