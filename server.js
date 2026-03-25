@@ -4,7 +4,7 @@ const path = require('path');
 const { login, createBooking, cancelBooking } = require('./stayfolio');
 const { getCheckinData, saveMemo } = require('./checkin');
 const { getToken } = require('./auth');
-const { closeRooms, openRooms } = require('./onda-api');
+const { closeRooms, openRooms, closeRoomsMJ, openRoomsMJ } = require('./onda-api');
 
 const app = express();
 app.use(express.json());
@@ -62,7 +62,12 @@ app.post('/close-vacancy', async (req, res) => {
     const { room, dates, memo } = req.body;
     if (!room) throw new Error('room 없음');
     const token = await getToken();
-    const result = await closeRooms(token, room, dates, memo);
+    const MJ_ROOMS = ['명 1','지 2','지 3','지 4','지 5','지 6'];
+    const result = MJ_ROOMS.includes(room)
+    ? await closeRoomsMJ(token, room, dates, memo)
+    : await closeRooms(token, room, dates, memo);
+
+    
     const { sendSlack } = require('./slack');
     await sendSlack(`:no_entry_sign: *방막기 완료*\n• 객실: ${room}\n• 날짜: ${dates.join(', ')}\n• 메모: ${memo || ''}`);
     res.json({ success: true, result });
@@ -79,7 +84,11 @@ app.post('/open-vacancy', async (req, res) => {
     const { room, dates } = req.body;
     if (!room) throw new Error('room 없음');
     const token = await getToken();
-    const result = await openRooms(token, room, dates);
+    const MJ_ROOMS = ['명 1','지 2','지 3','지 4','지 5','지 6'];
+    const result = MJ_ROOMS.includes(room)
+    ? await openRoomsMJ(token, room, dates)
+    : await openRooms(token, room, dates);
+    
     const { sendSlack } = require('./slack');
     await sendSlack(`:fire: *방열기 완료*\n• 객실: ${room}\n• 날짜: ${dates.join(', ')}`);
     res.json({ success: true, result });
