@@ -92,4 +92,39 @@ async function openRooms(token, roomName, dates, memo = '') {
   });
 }
 
-module.exports = { closeRooms, openRooms, ROOM_MAP, PROPERTY_ID };
+// 명지각 설정
+const MYEONGJIGAK_PROPERTY_ID = '138481';
+const MYEONGJIGAK_ROOM_MAP = {
+  '명 1': '1712801',
+  '지 2': '1712802',
+  '지 3': '1712803',
+  '지 4': '1712804',
+  '지 5': '1712805',
+  '지 6': '1712806',
+};
+
+async function closeRoomsMJ(token, rooms, dates, memo) {
+  const data = [];
+  for (const room of rooms) {
+    const ratePlanId = MYEONGJIGAK_ROOM_MAP[room];
+    if (!ratePlanId) throw new Error('명지각 객실 매핑 없음: ' + room);
+    for (const date of dates) {
+      data.push({ rateplan_id: ratePlanId, date, roomtype_name: room, vacancy: 1, base: true });
+    }
+  }
+  return callGql(token, 'MutationCloseVacancy', MUTATION_CLOSE, { property_id: MYEONGJIGAK_PROPERTY_ID, memo, data });
+}
+
+async function openRoomsMJ(token, rooms, dates) {
+  const data = [];
+  for (const room of rooms) {
+    const ratePlanId = MYEONGJIGAK_ROOM_MAP[room];
+    if (!ratePlanId) throw new Error('명지각 객실 매핑 없음: ' + room);
+    for (const date of dates) {
+      data.push({ rateplan_id: ratePlanId, date, roomtype_name: room, vacancy: 1, base: true });
+    }
+  }
+  return callGql(token, 'MutationOpenVacancy', MUTATION_OPEN, { property_id: MYEONGJIGAK_PROPERTY_ID, data });
+}
+
+module.exports = { closeRooms, openRooms, closeRoomsMJ, openRoomsMJ, ROOM_MAP, PROPERTY_ID };
