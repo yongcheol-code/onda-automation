@@ -218,3 +218,42 @@ async function cancelBooking(cookies, ondaBookingId, guestName = '', checkin = '
 }
 
 module.exports = { login, createBooking, cancelBooking, ROOM_ID_MAP };
+
+function addMyeongjigakConfig() {
+  const token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
+  
+  // stayfolio.js 가져오기
+  const getRes = UrlFetchApp.fetch(
+    'https://api.github.com/repos/yongcheol-code/onda-automation/contents/stayfolio.js',
+    { headers: { 'Authorization': 'Bearer ' + token } }
+  );
+  const fileData = JSON.parse(getRes.getContentText());
+  const sha = fileData.sha;
+  const content = Utilities.newBlob(Utilities.base64Decode(fileData.content.replace(/\n/g,''))).getDataAsString();
+  
+  // 명지각 ROOM_ID_MAP 추가
+  const addition = `
+const MYEONGJIGAK_PLACE_SLUG = 'myeongjigak';
+const MYEONGJIGAK_ROOM_ID_MAP = {
+  '명 1': 3830,
+  '지 2': 3831,
+  '지 3': 3858,
+  '지 4': 3859,
+  '지 5': 3860,
+  '지 6': 3861,
+};
+`;
+  
+  const updated = content + addition;
+  const encoded = Utilities.base64Encode(updated, Utilities.Charset.UTF_8);
+  
+  const res = UrlFetchApp.fetch(
+    'https://api.github.com/repos/yongcheol-code/onda-automation/contents/stayfolio.js',
+    {
+      method: 'put',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      payload: JSON.stringify({ message: 'Add: 명지각 ROOM_ID_MAP', content: encoded, sha: sha })
+    }
+  );
+  Logger.log('HTTP ' + res.getResponseCode());
+}
