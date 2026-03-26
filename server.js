@@ -137,7 +137,7 @@ const result = await createBooking(cookies, {
   '[ONDA 자동생성]',
   '예약번호: ' + (ondaBookingId || ''),
   '예약자(온다): ' + (ondaGuestName || ''),
-  req.body.countryCode ? '연락처: ' + req.body.countryCode + ' ' + (phone || '') : '',
+  req.body.countryCode ? '연락처: ' + req.body.countryCode + ' ' + (phone || '') : '⚠️ 연락처: ONDA 어드민에서 확인 후 보정 필요',
   req.body.price ? '금액: ' + req.body.price : '',
   req.body.note ? '고객요청: ' + req.body.note : '',
 ].filter(Boolean).join('\n'),
