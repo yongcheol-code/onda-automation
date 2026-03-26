@@ -106,7 +106,7 @@ const MYEONGJIGAK_ROOM_MAP = {
 async function closeRoomsMJ(token, rooms, dates, memo) {
   const data = [];
   const roomList = Array.isArray(rooms) ? rooms : [rooms];
-  for (const room of rooms) {
+  for (const room of roomList) {
     const ratePlanId = MYEONGJIGAK_ROOM_MAP[room];
     if (!ratePlanId) throw new Error('명지각 객실 매핑 없음: ' + room);
     for (const date of dates) {
@@ -119,7 +119,7 @@ async function closeRoomsMJ(token, rooms, dates, memo) {
 async function openRoomsMJ(token, rooms, dates) {
   const data = [];
   const roomList = Array.isArray(rooms) ? rooms : [rooms];
-  for (const room of rooms) {
+  for (const room of roomList) {
     const ratePlanId = MYEONGJIGAK_ROOM_MAP[room];
     if (!ratePlanId) throw new Error('명지각 객실 매핑 없음: ' + room);
     for (const date of dates) {
