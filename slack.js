@@ -31,4 +31,18 @@ async function postSlackThread(channel, thread_ts, text) {
   }
 }
 
-module.exports = { sendSlack, postSlackThread };
+async function sendSlackMJ(text) {
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL_MJ;
+  if (!webhookUrl) return;
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+  } catch (e) {
+    console.error('[Slack MJ] 전송 실패:', e.message);
+  }
+}
+
+module.exports = { sendSlack, sendSlackMJ, postSlackThread };
