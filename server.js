@@ -59,12 +59,11 @@ app.post('/save-memo', async (req, res) => {
 app.post('/close-vacancy', async (req, res) => {
   if (!verifySecret(req, res)) return;
   try {
-    const { room, dates } = req.body;
+    const { room, dates, memo } = req.body;
     if (!room) throw new Error('room 없음');
-    console.log('[open-vacancy] room:', JSON.stringify(room), 'type:', typeof room);
     const token = await getToken();
     const MJ_ROOMS = ['명 1','지 2','지 3','지 4','지 5','지 6'];
-    console.log('[open-vacancy] MJ_ROOMS.includes:', MJ_ROOMS.includes(room));
+    const isMJ = MJ_ROOMS.includes(room);
     
     const result = MJ_ROOMS.includes(room)
     ? await closeRoomsMJ(token, room, dates, memo)
@@ -87,10 +86,9 @@ app.post('/open-vacancy', async (req, res) => {
   try {
     const { room, dates } = req.body;
     if (!room) throw new Error('room 없음');
-    console.log('[open-vacancy] room:', JSON.stringify(room), 'type:', typeof room);
     const token = await getToken();
     const MJ_ROOMS = ['명 1','지 2','지 3','지 4','지 5','지 6'];
-    console.log('[open-vacancy] MJ_ROOMS.includes:', MJ_ROOMS.includes(room));
+    const isMJ = MJ_ROOMS.includes(room);
     
     const result = MJ_ROOMS.includes(room)
     ? await openRoomsMJ(token, room, dates)
