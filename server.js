@@ -71,8 +71,9 @@ app.post('/close-vacancy', async (req, res) => {
     : await closeRooms(token, room, dates, memo);
 
     
-    const { sendSlack } = require('./slack');
-    await sendSlack(`:no_entry_sign: *방막기 완료*\n• 객실: ${room}\n• 날짜: ${dates.join(', ')}\n• 메모: ${memo || ''}`);
+    const { sendSlack, sendSlackMJ } = require('./slack');
+    const slackFn = isMJ ? sendSlackMJ : sendSlack;
+    await slackFn(`:no_entry_sign: *방막기 완료*\n• 객실: ${room}\n• 날짜: ${dates.join(', ')}\n• 메모: ${memo || ''}`);
     res.json({ success: true, result });
   } catch (e) {
     console.error('[close-vacancy] error:', e.message);
@@ -95,8 +96,9 @@ app.post('/open-vacancy', async (req, res) => {
     ? await openRoomsMJ(token, room, dates)
     : await openRooms(token, room, dates);
     
-    const { sendSlack } = require('./slack');
-    await sendSlack(`:fire: *방열기 완료*\n• 객실: ${room}\n• 날짜: ${dates.join(', ')}`);
+    const { sendSlack, sendSlackMJ } = require('./slack');
+    const slackFn = isMJ ? sendSlackMJ : sendSlack;
+    await slackFn(`:fire: *방열기 완료*\n• 객실: ${room}\n• 날짜: ${dates.join(', ')}`);
     res.json({ success: true, result });
   } catch (e) {
     console.error('[open-vacancy] error:', e.message);
