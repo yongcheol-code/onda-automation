@@ -257,3 +257,20 @@ const MYEONGJIGAK_ROOM_ID_MAP = {
   );
   Logger.log('HTTP ' + res.getResponseCode());
 }
+
+async function getBookings(cookies, slug, per = 200) {
+  const res = await request(
+    'GET',
+    STAYFOLIO_HOST,
+    `/places/${slug}/bookings.json?per=${per}&status=accepted`,
+    null,
+    {
+      'Cookie': cookiesToString(cookies),
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    }
+  );
+  if (res.statusCode >= 400) throw new Error(`SF bookings 조회 실패: HTTP ${res.statusCode}`);
+  return JSON.parse(res.body);
+}
+module.exports = { login, createBooking, cancelBooking, getBookings };
