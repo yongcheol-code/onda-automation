@@ -149,6 +149,22 @@ const result = await createBooking(cookies, {
     res.status(500).json({ error: e.message });
   }
 });
+// ── SF 예약 데이터 조회 (청소 스케줄용) ───────────────
+app.get('/bookings', async (req, res) => {
+  if (!verifySecret(req, res)) return;
+  try {
+    const sfEmail = process.env.SF_EMAIL;
+    const sfPassword = process.env.SF_PASSWORD;
+    const slug = req.query.slug || 'aroundfollie-lodge';
+    const per = req.query.per || 200;
+    const cookies = await login(sfEmail, sfPassword);
+    const result = await getBookings(cookies, slug, per);
+    res.json(result);
+  } catch (e) {
+    console.error('[bookings] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // ── 스테이폴리오 예약 취소 ─────────────────────────
 app.post('/stayfolio-cancel', async (req, res) => {
