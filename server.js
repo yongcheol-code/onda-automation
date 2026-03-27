@@ -1,7 +1,7 @@
 'use strict';
 const express = require('express');
 const path = require('path');
-const { login, createBooking, cancelBooking } = require('./stayfolio');
+const { login, createBooking, cancelBooking, getBookings } = require('./stayfolio');
 const { getCheckinData, saveMemo } = require('./checkin');
 const { getToken } = require('./auth');
 const { closeRooms, openRooms, closeRoomsMJ, openRoomsMJ } = require('./onda-api');
