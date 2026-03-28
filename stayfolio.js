@@ -257,7 +257,6 @@ const MYEONGJIGAK_ROOM_ID_MAP = {
 }
 
 async function getBookings(cookies, slug) {
-  // 오늘부터 120일 후까지 예약만 가져오기 (페이지네이션)
   const today = new Date();
   const future = new Date(today);
   future.setDate(future.getDate() + 120);
@@ -266,8 +265,9 @@ async function getBookings(cookies, slug) {
 
   let allItems = [];
   let page = 1;
+  let totalPages = 1;
 
-  while (true) {
+  do {
     const res = await request(
       'GET', STAYFOLIO_HOST,
       `/places/${slug}/bookings.json?page=${page}&status=accepted`,
@@ -278,28 +278,22 @@ async function getBookings(cookies, slug) {
     const data = JSON.parse(res.body);
     const items = data.items || [];
 
-    // 날짜 필터: 오늘~120일 후 사이 체크인 예약만
+    if (page === 1) {
+      totalPages = Math.ceil((data.page?.total_count || 0) / (data.page?.per_page || 20));
+      console.log(`[getBookings] ${slug} → 총 ${data.page?.total_count}건 / ${totalPages}페이지`);
+    }
+
+    // 날짜 필터: 오늘~120일 사이 체크인만
     const filtered = items.filter(b => {
       if (!b.start) return false;
       const checkin = b.start.substring(0, 10);
       return checkin >= fromStr && checkin <= toStr;
     });
     allItems = allItems.concat(filtered);
-
-    // 현재 페이지 아이템이 모두 toStr 이후이면 중단 (최신순 정렬이므로)
-    const allAfterTo = items.every(b => !b.start || b.start.substring(0, 10) > toStr);
-    if (allAfterTo) { page++; continue; }
-
-    // 현재 페이지 아이템이 모두 fromStr 이전이면 중단
-    const allBeforeFrom = items.every(b => !b.start || b.start.substring(0, 10) < fromStr);
-    if (allBeforeFrom || items.length === 0) break;
-
-    // 최대 20페이지 제한 (안전장치)
-    if (page >= 20) break;
     page++;
-  }
+  } while (page <= totalPages);
 
-  console.log(`[getBookings] ${slug} → ${allItems.length}건 (${fromStr}~${toStr})`);
+  console.log(`[getBookings] ${slug} → 필터 후 ${allItems.length}건 (${fromStr}~${toStr})`);
   return { items: allItems };
 }
 module.exports = { login, createBooking, cancelBooking, getBookings, ROOM_ID_MAP };
