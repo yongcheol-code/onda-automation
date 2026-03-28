@@ -217,8 +217,6 @@ async function cancelBooking(cookies, ondaBookingId, guestName = '', checkin = '
   return { success: true, bookingId: booking.id };
 }
 
-module.exports = { login, createBooking, cancelBooking, ROOM_ID_MAP };
-
 function addMyeongjigakConfig() {
   const token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
   
@@ -259,6 +257,11 @@ const MYEONGJIGAK_ROOM_ID_MAP = {
 }
 
 async function getBookings(cookies, slug, per = 200) {
+  const today = new Date();
+  const future = new Date(today);
+  future.setDate(future.getDate() + 90);
+  const from = today.toISOString().substring(0, 10);
+  const to = future.toISOString().substring(0, 10);
   const res = await request(
     'GET',
     STAYFOLIO_HOST,
@@ -273,4 +276,4 @@ async function getBookings(cookies, slug, per = 200) {
   if (res.statusCode >= 400) throw new Error(`SF bookings 조회 실패: HTTP ${res.statusCode}`);
   return JSON.parse(res.body);
 }
-module.exports = { login, createBooking, cancelBooking, getBookings };
+module.exports = { login, createBooking, cancelBooking, getBookings, ROOM_ID_MAP };
