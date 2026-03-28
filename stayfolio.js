@@ -286,13 +286,16 @@ async function getBookings(cookies, slug) {
     });
     allItems = allItems.concat(filtered);
 
+    // 현재 페이지 아이템이 모두 toStr 이후이면 중단 (최신순 정렬이므로)
+    const allAfterTo = items.every(b => !b.start || b.start.substring(0, 10) > toStr);
+    if (allAfterTo) { page++; continue; }
+
     // 현재 페이지 아이템이 모두 fromStr 이전이면 중단
     const allBeforeFrom = items.every(b => !b.start || b.start.substring(0, 10) < fromStr);
     if (allBeforeFrom || items.length === 0) break;
 
-    // 다음 페이지
-    const totalPages = Math.ceil((data.page?.total_count || 0) / (data.page?.per_page || 20));
-    if (page >= totalPages) break;
+    // 최대 20페이지 제한 (안전장치)
+    if (page >= 20) break;
     page++;
   }
 
